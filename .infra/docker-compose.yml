@@ -1,0 +1,25 @@
+version: '3.8'
+name: nyc-service-requests
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nyc-service-requests-container
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+    external: false

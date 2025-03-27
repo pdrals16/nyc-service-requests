@@ -17,14 +17,10 @@ logging.basicConfig(
 logger = logging.getLogger("logger")
 
 NYC_DIR = os.path.dirname(__file__)
-BASE_DIR = os.path.dirname(NYC_DIR)
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DAGS_DIR = os.path.dirname(NYC_DIR)
+AIRFLOW_DIR = os.path.dirname(DAGS_DIR)
+DATA_DIR = os.path.join(AIRFLOW_DIR, "data")
 
-def get_interval(date):
-    date_start = datetime.strftime(datetime.strptime(date, "%Y-%m-%d") - timedelta(days=1), "%Y-%m-%d")
-    date_end = datetime.strftime(datetime.strptime(date, "%Y-%m-%d"), "%Y-%m-%d")
-    logging.info(f"Date reference is {date}, with date_start: {date_start} and date_end: {date_end}.")
-    return date_start, date_end
 
 def get_service_requests(params, max_retries=3, backoff_factor=2):
     url = os.environ.get("SERVICE_REQUESTS_URL")
@@ -104,15 +100,14 @@ def save_service_requests(data, date_reference, offset):
 
 
 def consume_service_requests(date_reference, limit=100, initial_offset = 0, max_retries=3):
-    date_start, date_end = get_interval(date_reference)
     offset = initial_offset
     check_records = True
-
+    logging.info(f"Starting to consume service requests from {date_reference} with initial offset {initial_offset}. Limit: {limit}, Max Retries: {max_retries}")
     while check_records:
         params = {
             "$limit": limit,
             "$offset": offset,
-            "$where": f"created_date <= '{date_end}T00:00:00.000' and created_date > '{date_start}T00:00:00.000'",
+            "$where": f"created_date <= '{date_reference}T23:59:59.999' and created_date > '{date_reference}T00:00:00.000'",
             "$$app_token": os.environ.get("SERVICE_REQUESTS_TOKEN")
         }
         
@@ -135,9 +130,9 @@ def consume_service_requests(date_reference, limit=100, initial_offset = 0, max_
             check_records = False
             
 
-if __name__=="__main__":
-    DATE_REFERENCE = "2025-01-01"
-    LIMIT = 1000
-    INITIAL_OFFSET = 0
-    MAX_RETRIES = 3
+def raw_ingest(**kwargs):
+    DATE_REFERENCE = kwargs.get("ds")
+    LIMIT = kwargs.get("limit") # 1000
+    INITIAL_OFFSET = kwargs.get("initial_offset") # 0
+    MAX_RETRIES = kwargs.get("max_retries") # 3
     consume_service_requests(DATE_REFERENCE, LIMIT, INITIAL_OFFSET, MAX_RETRIES)

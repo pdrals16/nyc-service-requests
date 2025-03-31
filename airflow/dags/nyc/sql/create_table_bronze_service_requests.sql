@@ -1,4 +1,4 @@
-CREATE TABLE service_requests (
+CREATE TABLE bronze_service_requests (
     unique_key INTEGER,
     created_date TIMESTAMP,
     closed_date TIMESTAMP,

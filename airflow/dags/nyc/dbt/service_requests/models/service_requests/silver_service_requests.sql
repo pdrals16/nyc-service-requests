@@ -16,7 +16,7 @@ WITH query_row_number AS (
                 created_date DESC
         ) row_number
     FROM
-        {{ source('service_requests', 'service_requests') }}
+        {{ source('bronze_service_requests', 'bronze_service_requests') }}
     WHERE
         created_date >= '{{ ref_date }} 00:00:00'
         AND created_date <= '{{ ref_date }} 23:59:59'

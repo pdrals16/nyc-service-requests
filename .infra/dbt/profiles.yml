@@ -1,0 +1,12 @@
+service_requests:
+  outputs:
+    dev:
+      dbname: 
+      host: 
+      pass: 
+      port: 
+      schema: 
+      threads: 
+      type: 
+      user: 
+  target: dev

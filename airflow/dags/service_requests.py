@@ -1,8 +1,17 @@
+import os 
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 from nyc.raw_ingest import raw_ingest
 from nyc.bronze_ingest import bronze_ingest
+
+
+DBT_PROFILE = 'service_requests'
+DBT_PROFILES_DIR = os.environ.get("DBT_PROFILES_DIR")
+DBT_TARGET = 'dev'
+DBT_PROJECT_DIR = '/opt/airflow/dags/nyc/dbt/service_requests'
 
 default_args = {
     'owner': 'Pedro',
@@ -18,8 +27,8 @@ dag = DAG(
     default_args=default_args,
     description='Service Request API',
     schedule_interval=timedelta(days=1),
-    start_date=datetime(2023, 1, 1),
-    catchup=False,
+    start_date=datetime(2025, 3, 27),
+    catchup=True,
     tags=['nyc'],
 )
 
@@ -43,4 +52,23 @@ task_bronze_ingest = PythonOperator(
     dag=dag
 )
 
-task_raw_ingest >> task_bronze_ingest
+task_dbt_deps = BashOperator(
+    task_id='task_dbt_deps',
+    bash_command=f'cd {DBT_PROJECT_DIR} && dbt deps --profiles-dir {DBT_PROFILES_DIR} --target {DBT_TARGET}',
+    dag=dag,
+)
+
+reference_date = "{{ ds }}"
+task_dbt_run = BashOperator(
+    task_id='task_dbt_run',
+    bash_command=f"cd {DBT_PROJECT_DIR} && dbt run --vars '{{reference_date: {reference_date}}}' --profiles-dir {DBT_PROFILES_DIR} --target {DBT_TARGET}",
+    dag=dag, 
+)
+
+task_dbt_test = BashOperator(
+    task_id='task_dbt_test',
+    bash_command=f'cd {DBT_PROJECT_DIR} && dbt test --profiles-dir {DBT_PROFILES_DIR} --target {DBT_TARGET}',
+    dag=dag,
+)
+
+task_raw_ingest >> task_bronze_ingest >> task_dbt_deps >> task_dbt_run >> task_dbt_test

@@ -1,0 +1,8 @@
+version: 1
+
+sources:
+  - name: service_requests
+    database: nycdb  
+    schema: public  
+    tables:
+      - name: service_requests

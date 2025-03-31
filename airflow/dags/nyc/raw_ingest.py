@@ -131,7 +131,7 @@ def consume_service_requests(date_reference, limit=100, initial_offset = 0, max_
             
 
 def raw_ingest(**kwargs):
-    DATE_REFERENCE = kwargs.get("ds")
+    DATE_REFERENCE = kwargs.get("yesterday_ds")
     LIMIT = kwargs.get("limit") # 1000
     INITIAL_OFFSET = kwargs.get("initial_offset") # 0
     MAX_RETRIES = kwargs.get("max_retries") # 3

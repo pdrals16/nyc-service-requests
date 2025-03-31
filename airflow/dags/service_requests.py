@@ -13,6 +13,8 @@ DBT_PROFILES_DIR = os.environ.get("DBT_PROFILES_DIR")
 DBT_TARGET = 'dev'
 DBT_PROJECT_DIR = '/opt/airflow/dags/nyc/dbt/service_requests'
 
+reference_date = "{{ yesterday_ds }}"
+
 default_args = {
     'owner': 'Pedro',
     'depends_on_past': False,
@@ -47,7 +49,7 @@ task_bronze_ingest = PythonOperator(
     task_id='bronze_ingest',
     python_callable=bronze_ingest,
     op_kwargs={
-        "table_name": "service_requests"
+        "table_name": "bronze_service_requests"
     },
     dag=dag
 )
@@ -58,7 +60,6 @@ task_dbt_deps = BashOperator(
     dag=dag,
 )
 
-reference_date = "{{ ds }}"
 task_dbt_run = BashOperator(
     task_id='task_dbt_run',
     bash_command=f"cd {DBT_PROJECT_DIR} && dbt run --vars '{{reference_date: {reference_date}}}' --profiles-dir {DBT_PROFILES_DIR} --target {DBT_TARGET}",

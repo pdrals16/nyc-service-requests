@@ -48,7 +48,7 @@ def create_table_if_exists(table_name, cursor):
 def load_data(path):
     logging.info(f"Loading data from {path}.")
     raw_table = duckdb.read_json(path)
-    sql_bronze = read_sql(f"{NYC_DIR}/sql/bronze_table_service_requests.sql")
+    sql_bronze = read_sql(f"{NYC_DIR}/sql/bronze_table_bronze_service_requests.sql")
 
     bronze_table = duckdb.sql(sql_bronze)
     values = bronze_table.fetchall()
@@ -58,13 +58,13 @@ def load_data(path):
 
 def insert_database(values, cursor, page_size=100):
     logging.info("Ingesting data into the database...") 
-    sql_insert = read_sql(f"{NYC_DIR}/sql/insert_table_service_requests.sql")
+    sql_insert = read_sql(f"{NYC_DIR}/sql/insert_table_bronze_service_requests.sql")
     extras.execute_values(cursor, sql_insert, values, template=None, page_size=page_size)
     logging.info("Ingesting data into the database has been completed.") 
     
 
 def bronze_ingest(**kwargs):
-    DATE_REFERENCE = kwargs.get("ds")
+    DATE_REFERENCE = kwargs.get("yesterday_ds")
     TABLE_NAME = kwargs.get("table_name")
     PATH = f"{DATA_DIR}/service-requests/{DATE_REFERENCE}/*.json"
     
